@@ -52,14 +52,14 @@ int main(int argc, char** argv)
         cacheSize=std::stoi(argv[1]);
     	assert(isPowerOf2(cacheSize)&&"cacheSize must be power of 2");
 
-        assoc=std::stoi(argv[2]);
-    	assert(isPowerOf2(assoc)&&"assoc must be power of 2");
-    	assert(cacheSize>assoc&&"cacheSize must be greater than assoc");
-
-        blockSize=std::stoi(argv[3]);
+				blockSize=std::stoi(argv[2]);
     	assert(isPowerOf2(blockSize)&&"blockSize must be power of 2");
     	assert(cacheSize>blockSize&&"cacheSize must be greater than blockSize");
 
+        assoc=std::stoi(argv[3]);
+    	assert(isPowerOf2(assoc)&&"assoc must be power of 2");
+    	assert(cacheSize>assoc&&"cacheSize must be greater than assoc");
+        
         addressesFile.append(argv[4]);
 
         //std::cout<<cacheSize<<assoc<<blockSize<<addressesFile<<std::endl;
@@ -177,16 +177,21 @@ int main(int argc, char** argv)
 			missesFIFO+=1;
 			updateFIFO(tagsFIFO, index, way, assoc);
 		}
+
 //Actualizo la cache SRRIP
 		if(isHit(tagsSRRIP, index, tag, assoc, &way)==false)
 		{
 			way = getVictimSRRIP(tagsSRRIP, index, assoc);
 			tagsSRRIP[(index*assoc)+way].tag=tag;
 			tagsSRRIP[(index*assoc)+way].valid=true;
-			missesSRRIP+=1;
+			missesSRRIP++;//
 		}
-		updateSRRIP(tagsSRRIP, index, way, assoc);		
-    }
+		else
+		{
+			updateSRRIP(tagsSRRIP, index, way, assoc);		
+		}
+		}
+
     //Close the file stream
     in.close();
 
@@ -355,12 +360,34 @@ int getVictimSRRIP(struct cacheBlock tags[], int index, int assoc){
 	//check empty way
 	int i;
 	for(i=0; i<assoc;i++)
-	{
+	{	
 		if(tags[(index*assoc)+i].valid==false)
 		{
 			return i;
 		}
 	}
+
 	//look for the victim way
-	return 0;
+	//int lower=0;
+	bool go_to_step_i = true;
+
+	do
+	{
+		for(i=1; i<assoc;i++)// STEP i: search for first ‘3’ from left
+		{	
+			if(tags[(index*assoc)+i].replacement == 3){	// STEP ii: if ‘3’ found go to step (v)
+				tags[(index*assoc)+i].replacement = 2; // STEP v: replace block and set RRPV to ‘2’
+				return i;
+			}
+		}
+
+		for(i=1; i<assoc;i++)// STEP iii: increment all RRPVs
+		{
+			/* incremento en 1 todos los replacement*/
+			tags[(index*assoc)+i].replacement++;
+		}
+
+	} while (go_to_step_i == true);	// STEP iv: goto step i
+
+	return i;
 }
