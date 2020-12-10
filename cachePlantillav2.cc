@@ -52,11 +52,11 @@ int main(int argc, char** argv)
         cacheSize=std::stoi(argv[1]);
     	assert(isPowerOf2(cacheSize)&&"cacheSize must be power of 2");
 
-				blockSize=std::stoi(argv[2]);
+				blockSize=std::stoi(argv[3]);
     	assert(isPowerOf2(blockSize)&&"blockSize must be power of 2");
     	assert(cacheSize>blockSize&&"cacheSize must be greater than blockSize");
 
-        assoc=std::stoi(argv[3]);
+        assoc=std::stoi(argv[2]);
     	assert(isPowerOf2(assoc)&&"assoc must be power of 2");
     	assert(cacheSize>assoc&&"cacheSize must be greater than assoc");
         
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 			tagsSRRIP[(i*assoc)+j].valid=0;
 			tagsSRRIP[(i*assoc)+j].tag=0;
 			tagsSRRIP[(i*assoc)+j].dirtyBit=0;
-			tagsSRRIP[(i*assoc)+j].replacement=0;
+			tagsSRRIP[(i*assoc)+j].replacement=3;
 
 		}
 	}
@@ -362,7 +362,8 @@ int getVictimSRRIP(struct cacheBlock tags[], int index, int assoc){
 	for(i=0; i<assoc;i++)
 	{	
 		if(tags[(index*assoc)+i].valid==false)
-		{
+		{	
+			tags[(index*assoc)+i].replacement = 2;
 			return i;
 		}
 	}
